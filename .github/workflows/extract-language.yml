@@ -1,9 +1,9 @@
-name: Extract and Act on Language Info from Jupyter Notebook
+name: Images modification based on language of the notebook
 
 on:
-  push:
-    paths:
-      - 'article.ipynb'      # Trigger when article.ipynb is modified
+#   push:
+#     paths:
+#       - 'media/**'      # Trigger when media is modified
   workflow_dispatch:         # Allows manual triggering of the workflow
 
 jobs:
@@ -25,8 +25,11 @@ jobs:
       # 3. Install jq
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
+      # 4. Install ImageMagick
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
 
-      # 4. Extract language_info.name using jq
+      # 5. Extract language_info.name using jq
       - name: Extract language_info.name
         id: extract_lang_name
         run: |
@@ -38,29 +41,49 @@ jobs:
           # Set the extracted value as an output variable
           echo "lang_name=$LANGUAGE_NAME" >> $GITHUB_OUTPUT
 
-      # 5. Conditional Action: If Language is R
-      - name: Action for R Language
+      # Conditional action: If Language is R
+      - name: Converting from jpg to png (language=R)
         if: steps.extract_lang_name.outputs.lang_name == 'R'
         run: |
           echo "Language is R. Performing R-specific actions..."
-          # Add your R-specific commands here
-          # Example: Run an R script
-          # Rscript scripts/run_analysis.R
+          # Navigate to the media directory
+          cd media
           
-      # 6. Conditional Action: If Language is Not R
-      - name: Action for Non-R Language
+          # Find all .jpeg and .jpg files recursively
+          find . -type f \( -iname "*.jpeg" -o -iname "*.jpg" \) | while read -r file; do
+            # Define the new PNG file name
+            png_file="${file%.*}.png"
+            
+            # Check if PNG already exists and is up-to-date
+            if [ ! -f "$png_file" ] || [ "$file" -nt "$png_file" ]; then
+              # Convert JPEG/JPG to PNG
+              convert "$file" -density 72 -units PixelsPerInch "$png_file"
+              echo "Converted $file to $png_file with 72 DPI resolution."
+              
+              # Delete the original JPEG/JPG file
+              rm "$file"
+              echo "Deleted original file $file"
+              ls
+            else
+              echo "Skipped $file; PNG is up-to-date."
+            fi
+          done
+          
+      # Conditional Action: If Language is Not R
+      - name: Doing nothing for non-R
         if: steps.extract_lang_name.outputs.lang_name != 'R'
         run: |
-          echo "Language is not R. Performing alternative actions..."
-          # Add your alternative commands here
-          # Example: Run a Python script
-          # python scripts/run_analysis.py
-
-      # 7. (Optional) Notify the Result
+          echo "Language is not R. Keeping images the same"
+      # Notify the Result
       - name: Notify Result
         run: |
           if [ "${{ steps.extract_lang_name.outputs.lang_name }}" = "R" ]; then
-            echo "has R"
+            echo "has R as language"
           else
-            echo "doesn't have R"
+            echo "doesn't have R as running language"
           fi
+      - name: Commit and Push Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+            commit_message: "Convert JPEG images to PNG format"
+            branch: main # Ensures commits are made to the current branch
