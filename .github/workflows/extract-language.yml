@@ -1,37 +1,66 @@
-name: Extract Language Info from Jupyter Notebook
+name: Extract and Act on Language Info from Jupyter Notebook
 
-on:  
-  workflow_dispatch:           # Allows manual triggering
+on:
+  push:
+    paths:
+      - 'article.ipynb'      # Trigger when article.ipynb is modified
+  workflow_dispatch:         # Allows manual triggering of the workflow
 
 jobs:
-  extract-language-info:
+  extract-and-act:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the repository
+      # 1. Prevent Infinite Loops by Skipping Actions Commits
+      - name: Prevent Infinite Loop
+        if: github.actor == 'github-actions[bot]'
+        run: |
+          echo "Commit made by GitHub Actions. Skipping workflow execution."
+          exit 0
+
+      # 2. Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Install jq
+      # 3. Install jq
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      # 3. Extract language_info using jq
-      - name: Extract language_info
-        id: extract_lang_info
+      # 4. Extract language_info.name using jq
+      - name: Extract language_info.name
+        id: extract_lang_name
         run: |
-          # Extract the language_info field and save it to a variable
-          LANGUAGE_INFO=$(jq '.metadata.language_info' article.ipynb)
+          # Extract the language_info.name field
+          LANGUAGE_NAME=$(jq -r '.metadata.language_info.name // "Not Found"' article.ipynb)
           
-          # Print the extracted language_info
-          echo "### Language Info Extracted:"
-          echo "$LANGUAGE_INFO"
+          echo "### Extracted language_info.name: $LANGUAGE_NAME"
           
-          # Optionally, set it as an output variable for use in subsequent steps
-          echo "::set-output name=lang_info::$LANGUAGE_INFO"
+          # Set the extracted value as an output variable
+          echo "lang_name=$LANGUAGE_NAME" >> $GITHUB_OUTPUT
 
-      # 4. (Optional) Use the extracted information in another step
-      - name: Use Extracted language_info
+      # 5. Conditional Action: If Language is R
+      - name: Action for R Language
+        if: steps.extract_lang_name.outputs.lang_name == 'R'
         run: |
-          echo "The extracted language_info is:"
-          echo "${{ steps.extract_lang_info.outputs.lang_info }}"
+          echo "Language is R. Performing R-specific actions..."
+          # Add your R-specific commands here
+          # Example: Run an R script
+          # Rscript scripts/run_analysis.R
+          
+      # 6. Conditional Action: If Language is Not R
+      - name: Action for Non-R Language
+        if: steps.extract_lang_name.outputs.lang_name != 'R'
+        run: |
+          echo "Language is not R. Performing alternative actions..."
+          # Add your alternative commands here
+          # Example: Run a Python script
+          # python scripts/run_analysis.py
+
+      # 7. (Optional) Notify the Result
+      - name: Notify Result
+        run: |
+          if [ "${{ steps.extract_lang_name.outputs.lang_name }}" = "R" ]; then
+            echo "has R"
+          else
+            echo "doesn't have R"
+          fi
