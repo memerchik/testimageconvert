@@ -1,0 +1,58 @@
+name: Convert JPEG to PNG
+
+on:
+  push:
+    paths:
+      - 'media/**' # Trigger only when changes occur in the media folder
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  convert-images:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        persist-credentials: false # Disable automatic token injection
+
+    - name: Set up Git User
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Install ImageMagick
+      run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+    - name: Find and Convert JPEGs to PNGs
+      run: |
+        # Find all .jpeg and .jpg files in /media/
+        find media/ -type f \( -iname "*.jpeg" -o -iname "*.jpg" \) | while read file; do
+          # Define the new file name with .png extension
+          png_file="${file%.*}.png"
+          # Convert the image to PNG
+          convert "$file" "$png_file"
+          echo "Converted $file to $png_file"
+        done
+
+    - name: Check for Changes
+      id: git-check
+      run: |
+        # Check if there are any new PNG files
+        if git status --porcelain | grep -q "^A\|^M"; then
+          echo "Changes detected"
+          echo "::set-output name=changes::true"
+        else
+          echo "No changes"
+          echo "::set-output name=changes::false"
+        fi
+
+    - name: Commit and Push Changes
+      if: steps.git-check.outputs.changes == 'true'
+      run: |
+        git add media/*.png
+        git commit -m "Convert JPEG images to PNG format"
+        git push
+      env:
+        # Use the GitHub token provided by the workflow
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
