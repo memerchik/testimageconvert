@@ -37,6 +37,7 @@ jobs:
             # Delete the original JPEG/JPG file
             rm "$file"
             echo "Deleted original file $file"
+            ls
           else
             echo "Skipped $file; PNG is up-to-date."
           fi
