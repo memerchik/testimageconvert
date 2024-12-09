@@ -1,0 +1,37 @@
+name: Extract Language Info from Jupyter Notebook
+
+on:  
+  workflow_dispatch:           # Allows manual triggering
+
+jobs:
+  extract-language-info:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # 2. Install jq
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      # 3. Extract language_info using jq
+      - name: Extract language_info
+        id: extract_lang_info
+        run: |
+          # Extract the language_info field and save it to a variable
+          LANGUAGE_INFO=$(jq '.metadata.language_info' article.ipynb)
+          
+          # Print the extracted language_info
+          echo "### Language Info Extracted:"
+          echo "$LANGUAGE_INFO"
+          
+          # Optionally, set it as an output variable for use in subsequent steps
+          echo "::set-output name=lang_info::$LANGUAGE_INFO"
+
+      # 4. (Optional) Use the extracted information in another step
+      - name: Use Extracted language_info
+        run: |
+          echo "The extracted language_info is:"
+          echo "${{ steps.extract_lang_info.outputs.lang_info }}"
