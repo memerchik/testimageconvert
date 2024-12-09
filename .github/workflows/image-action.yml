@@ -48,5 +48,5 @@ jobs:
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
           commit_message: "Convert JPEG images to PNG format"
-          branch: ${{ github.ref }} # Ensures commits are made to the current branch
+          branch: main # Ensures commits are made to the current branch
           file_pattern: 'media/*.png' # Specifies which files to commit
