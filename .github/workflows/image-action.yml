@@ -26,7 +26,7 @@ jobs:
         # Find all .jpeg and .jpg files recursively
         find . -type f \( -iname "*.jpeg" -o -iname "*.jpg" \) | while read -r file; do
           # Define the new PNG file name
-          png_file="${file%.*}.png"
+          png_file="${file%.*}m.png"
           
           # Check if PNG already exists and is up-to-date
           if [ ! -f "$png_file" ] || [ "$file" -nt "$png_file" ]; then
