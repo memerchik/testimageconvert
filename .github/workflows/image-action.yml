@@ -36,3 +36,5 @@ jobs:
         commit_message: Automated commit
         branch: main
         create_branch: false
+    env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
