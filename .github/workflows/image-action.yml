@@ -35,20 +35,8 @@ jobs:
           echo "Converted $file to $png_file"
         done
 
-    - name: Check for Changes
-      id: git-check
-      run: |
-        # Check if there are any new PNG files
-        if git status --porcelain | grep -q "^A\|^M"; then
-          echo "Changes detected"
-          echo "::set-output name=changes::true"
-        else
-          echo "No changes"
-          echo "::set-output name=changes::false"
-        fi
 
     - name: Commit and Push Changes
-      if: steps.git-check.outputs.changes == 'true'
       run: |
         git add media/*.png
         git commit -m "Convert JPEG images to PNG format"
