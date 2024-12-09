@@ -18,16 +18,30 @@ jobs:
     - name: Install ImageMagick
       run: sudo apt-get update && sudo apt-get install -y imagemagick
 
-    - name: Find and Convert JPEGs to PNGs
+    - name: Convert JPEGs to PNGs and Delete Originals
       run: |
-        # Find all .jpeg and .jpg files in /media/
-        find media/ -type f \( -iname "*.jpeg" -o -iname "*.jpg" \) | while read file; do
-          # Define the new file name with .png extension
+        # Navigate to the media directory
+        cd media
+        
+        # Find all .jpeg and .jpg files recursively
+        find . -type f \( -iname "*.jpeg" -o -iname "*.jpg" \) | while read -r file; do
+          # Define the new PNG file name
           png_file="${file%.*}.png"
-          # Convert the image to PNG
-          convert "$file" "$png_file"
-          echo "Converted $file to $png_file"
+          
+          # Check if PNG already exists and is up-to-date
+          if [ ! -f "$png_file" ] || [ "$file" -nt "$png_file" ]; then
+            # Convert JPEG/JPG to PNG
+            convert "$file" "$png_file"
+            echo "Converted $file to $png_file"
+            
+            # Delete the original JPEG/JPG file
+            rm "$file"
+            echo "Deleted original file $file"
+          else
+            echo "Skipped $file; PNG is up-to-date."
+          fi
         done
+
 
 
     - name: Commit and Push Changes
