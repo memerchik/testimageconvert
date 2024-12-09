@@ -1,0 +1,25 @@
+name: Convert JPEG to PNG
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  convert-images:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+
+    - name: Install ImageMagick
+      run: sudo rm "2-miami.jpg"
+
+
+
+    - name: Commit and Push Changes
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+          commit_message: "Convert JPEG images to PNG format"
+          branch: main # Ensures commits are made to the current branch
+          file_pattern: 'media/*.png' # Specifies which files to commit

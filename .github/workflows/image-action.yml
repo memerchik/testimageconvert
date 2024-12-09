@@ -26,7 +26,7 @@ jobs:
         # Find all .jpeg and .jpg files recursively
         find . -type f \( -iname "*.jpeg" -o -iname "*.jpg" \) | while read -r file; do
           # Define the new PNG file name
-          png_file="${file%.*}m.png"
+          png_file="${file%.*}.png"
           
           # Check if PNG already exists and is up-to-date
           if [ ! -f "$png_file" ] || [ "$file" -nt "$png_file" ]; then
@@ -50,4 +50,3 @@ jobs:
       with:
           commit_message: "Convert JPEG images to PNG format"
           branch: main # Ensures commits are made to the current branch
-          file_pattern: 'media/*.png' # Specifies which files to commit
