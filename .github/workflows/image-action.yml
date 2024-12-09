@@ -1,9 +1,6 @@
 name: Convert JPEG to PNG
 
 on:
-  push:
-    paths:
-      - 'media/**' # Trigger only when changes occur in the media folder
   workflow_dispatch: # Allows manual triggering
 
 jobs:
